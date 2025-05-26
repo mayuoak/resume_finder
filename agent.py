@@ -29,15 +29,17 @@ def run_agent(mode: str):
         agent_executor.run(f"store job description from this file: {job_desc_filepath}")
     elif mode == "find":
         resumes = load_resume_tool.invoke('data/resumes')
-        resumes_str = json.dumps(resumes)
+        resumes_str = json.dumps(resumes, indent=2)
         prompt = f"""
         Use score_resumes_tool to evaluate the following resumes against the stored job description.
-        Each resume is in the form of a JSON array of dictionaries with 'name' and 'description'.
+
         Return a markdown table with Name and Match Score.
 
+        Here is the resume data:
         '''{resumes_str}'''
-                """
+        """
 
+        # ✅ Now pass the prompt properly
         response = agent_executor.invoke({"input": prompt})
         print(response)
     else:
