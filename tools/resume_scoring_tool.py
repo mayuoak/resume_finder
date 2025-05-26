@@ -3,32 +3,30 @@ from tools.vector_store import load_job_description
 from langchain_openai import ChatOpenAI
 import pandas as pd
 import ast
+from dotenv import load_dotenv
 
+load_dotenv()
 @tool
 def score_resumes_tool(resumes_str: str):
     """
     Accepts resumes as a list of dictionaries in string format:
-    [
-    {"name": "Alice", "description": "Experienced ML engineer..."},
-    {"name": "Bob", "description": "Experienced data engineer..."},
-    ]
 
     Returns a markdown table of resume scores based on the stored job description.
     """
 
     try:
         resumes = ast.literal_eval(resumes_str)
-        print(resumes)
     except Exception as e:
         return f"Failed to parse resumes input: {e}"
     
-    jd = load_job_description()
-    llm = ChatOpenAI(model="gpt-4o")
+    jd = load_job_description()['text']
+    llm = ChatOpenAI(model_name="gpt-4o")
+    print(jd)
 
     results = []
 
     for resume in resumes:
-        name = resume.get("name", "Unknown")
+        candidate = resume.get("name", "Unknown")
         content = resume.get("description", "")
 
         prompt = f"""
@@ -48,7 +46,7 @@ def score_resumes_tool(resumes_str: str):
         except Exception as e:
             score = 0.0
 
-        results.append((name, score))
+        results.append((candidate, score))
     df = pd.DataFrame(results, columns=["Name", "Match Score"])
     df = df.sort_values(by="Match Score", ascending=False)
 

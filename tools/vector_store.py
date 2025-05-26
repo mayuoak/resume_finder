@@ -25,4 +25,4 @@ def load_job_description():
             meta = pickle.load(f)
             return meta
     else:
-        raise FileNotFoundError
+        return "not found"

@@ -3,7 +3,7 @@ from tools.vector_store import save_job_description, load_job_description
 
 @tool
 def store_job_description_tool(filepath: str):
-    """Loads job description from filepath and store in vector db in the initialize mode"""
+    """Reads the job description from filepath and stores it to vector db"""
     with open(filepath, 'r') as f:
         jd = f.read()
     save_job_description(jd)

@@ -6,3 +6,4 @@ pymupdf
 pandas
 python-dotenv
 pydantic
+tabulate
