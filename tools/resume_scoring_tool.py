@@ -42,7 +42,7 @@ def score_resumes_tool(resumes_str: str):
                     """
         try:
             raw = llm.invoke(prompt)
-            score = float(raw.strip())
+            score = float(raw.content.strip())
         except Exception as e:
             score = 0.0
 
