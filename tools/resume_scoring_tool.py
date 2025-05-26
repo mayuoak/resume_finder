@@ -21,8 +21,6 @@ def score_resumes_tool(resumes_str: str):
     
     jd = load_job_description()['text']
     llm = ChatOpenAI(model_name="gpt-4o")
-    print(jd)
-
     results = []
 
     for resume in resumes:
@@ -47,6 +45,7 @@ def score_resumes_tool(resumes_str: str):
             score = 0.0
 
         results.append((candidate, score))
+    #print(results)
     df = pd.DataFrame(results, columns=["Name", "Match Score"])
     df = df.sort_values(by="Match Score", ascending=False)
 
