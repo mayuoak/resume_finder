@@ -7,3 +7,7 @@ pandas
 python-dotenv
 pydantic
 tabulate
+faiss-cpu 
+sentence-transformers
+langchain-google-genai
+dateparser
