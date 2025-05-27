@@ -141,8 +141,7 @@ python gemini_save.py
 
 End the file with credits and licensing terms:
 
-```markdown
-## 👤 Author
+## Author
 
 **Mayuresh Oak**  
 [GitHub](https://github.com/mayuoak)
