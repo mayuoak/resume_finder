@@ -117,6 +117,13 @@ def save_job_description_tool(filepath: str) -> str:
     index_store.save(text, vector)
     return "Job description saved."
 
+
+@tool
+def read_resumes_from_directory(resume_dir: str) -> str:
+    """Reads all PDF resumes from a directory and returns them as a JSON string."""
+    resumes = PDFReader.read_resumes(resume_dir)
+    return json.dumps(resumes)
+
 @tool
 def extract_text_from_pdf_tool(filepath: str) -> str:
     """Extract and return text content from a PDF file."""
@@ -217,6 +224,7 @@ tools = [
     save_job_description_tool,
     extract_text_from_pdf_tool,
     score_resumes_tool,
+    read_resumes_from_directory,
 ]
 
 agent_executor = initialize_agent(
@@ -231,21 +239,13 @@ def main():
     jd_path = "/Users/mayureshoak/Documents/git_repos/resume_finder/data/job_description.txt"
     resume_dir = "/Users/mayureshoak/Documents/git_repos/resume_finder/data/resumes"
 
-    print(agent_executor.run(f"Save the job description from {jd_path}"))
-
-    resumes = PDFReader.read_resumes(resume_dir)
-    print("Read resumes")
-    resume_input = ResumeList(resumes=resumes)
-    resume_json = json.dumps([r.model_dump() for r in resume_input.resumes])
-    result = agent_executor.run(
-    f"""
-    Score the following resumes using the tool. Use the score_resumes_tool and return the output as-is. job description is fetched directly from the score resume tool internally from a file.
-
-    Resumes:
-    {resume_json}
-    """
-)
-    #result = score_resumes_tool.invoke({"resume_list": resume_input})
+    result = agent_executor.run(f"""
+    Please perform the following steps:
+    1. Load and save the job description from the file: {jd_path}
+    2. Extract and score all resumes found in the folder: {resume_dir}
+    3. Use the score_resumes_tool and return the result as a markdown table. 
+    job description is loaded internally in score resumes tool.
+    """)
     print(result)
 
 if __name__ == "__main__":
