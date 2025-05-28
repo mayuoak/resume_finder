@@ -16,6 +16,7 @@ from langchain.tools import tool
 from langchain_google_genai import ChatGoogleGenerativeAI
 from pydantic import BaseModel, Field
 import json
+import re
 
 # Load environment
 load_dotenv()
@@ -122,13 +123,37 @@ def extract_text_from_pdf_tool(filepath: str) -> str:
     return PDFReader.extract_text(filepath)
 
 
-def clean_llm_response(text):
-    lines = text.strip().splitlines()
-    return "\n".join([line for line in lines if not line.strip().startswith("```")])
+def clean_llm_response(text: str) -> str:
+    """
+    Cleans LLM responses by removing:
+    - Markdown-style code block markers (e.g., ```json, ```)
+    - Leading/trailing backticks (` or ```)
+    - Triple quotes if present
+    - Stray whitespace and newlines
+    - JSON string inside quoted string
+    """
+    text = text.strip()
+
+    # Remove enclosing triple quotes or single quotes
+    text = text.strip('"""').strip("'''").strip("'").strip('"')
+
+    # Remove markdown code fences like ```json or ```
+    lines = text.splitlines()
+    lines = [line for line in lines if not line.strip().startswith("```")]
+    text = "\n".join(lines)
+
+    # Remove any leading/trailing backticks or triple backticks
+    text = re.sub(r"^`{1,3}", "", text)
+    text = re.sub(r"`{1,3}$", "", text)
+
+    # Remove any surrounding quotes again
+    text = text.strip('"""').strip("'''").strip("'").strip('"').strip()
+
+    return text
 
 
 @tool
-def score_resumes_tool(resume_list: ResumeList) -> str:
+def score_resumes_tool(resume_list_str: str) -> str:
     """Score a list of resumes (JSON string) against the stored job description using Gemini and cosine similarity."""
 
     jd_text, jd_vector = index_store.load()
@@ -139,6 +164,13 @@ def score_resumes_tool(resume_list: ResumeList) -> str:
         a = np.array(a)
         b = np.array(b)
         return float(np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b)))
+    
+    try:
+        cleaned = clean_llm_response(resume_list_str)
+        parsed = json.loads(cleaned)
+        resume_list = ResumeList(resumes=[Resume(**r) for r in parsed])
+    except Exception as e:
+        return f"Error parsing resume json: {e}"
 
     results = []
     for resume in resume_list.resumes:
@@ -204,11 +236,16 @@ def main():
     resumes = PDFReader.read_resumes(resume_dir)
     print("Read resumes")
     resume_input = ResumeList(resumes=resumes)
+    resume_json = json.dumps([r.model_dump() for r in resume_input.resumes])
+    result = agent_executor.run(
+    f"""
+    Score the following resumes using the tool. Use the score_resumes_tool and return the output as-is. job description is fetched directly from the score resume tool internally from a file.
 
-    # result = agent_executor.run(
-    #     f"Score the following resumes based on the stored job description: {resumes}"
-    # )
-    result = score_resumes_tool.invoke({"resume_list": resume_input})
+    Resumes:
+    {resume_json}
+    """
+)
+    #result = score_resumes_tool.invoke({"resume_list": resume_input})
     print(result)
 
 if __name__ == "__main__":
