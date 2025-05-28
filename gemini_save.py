@@ -212,7 +212,8 @@ def score_resumes_tool(resume_list_str: str) -> str:
             gemini_score = Score(metric="gemini", score=float(temp.get("score", 0)))
         except Exception as e:
             raise e
-        final_score = f"{gemini_score.score} LLM, {cosine_score.score} cosine"
+        # final_score = f"{gemini_score.score} LLM, {cosine_score.score} cosine"
+        final_score = 0.7 * gemini_score.score + 0.3 * cosine_score.score
         results.append((name, final_score))
 
     df = pd.DataFrame(results, columns=["Name", "Score"])
